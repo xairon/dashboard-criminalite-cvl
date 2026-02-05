@@ -1,120 +1,138 @@
-# Dashboard Criminalité - Centre-Val de Loire
+# Criminalité en Centre-Val de Loire : les chiffres face au ressenti
 
-Dashboard interactif d'analyse des données de criminalité en région Centre-Val de Loire, confrontées au sentiment d'insécurité national.
+**Analyse factuelle des données officielles 2016-2024**
 
-## Objectif
+## Résumé
 
-Ce dashboard permet de visualiser l'évolution réelle de la criminalité enregistrée par les forces de l'ordre, et de la comparer au sentiment d'insécurité ressenti par la population française. L'objectif est de fournir une analyse factuelle basée sur les données officielles, pour permettre à chacun de se faire sa propre opinion au-delà des discours politiques.
+Cette étude analyse l'évolution de la criminalité enregistrée en région Centre-Val de Loire entre 2016 et 2024, et la confronte à l'évolution du sentiment d'insécurité au niveau national. Les données proviennent exclusivement de sources officielles (SSMSI, INSEE).
 
-## Données utilisées
+**Constat principal** : Sur la période 2016-2024, le sentiment d'insécurité a augmenté de **+58%** au niveau national, alors que l'évolution de la criminalité enregistrée en Centre-Val de Loire présente un tableau contrasté : certains indicateurs sont en forte baisse, d'autres en hausse.
 
-### Criminalité enregistrée
+---
 
-**Source**: [SSMSI - Service Statistique Ministériel de la Sécurité Intérieure](https://www.interieur.gouv.fr/Interstats)
+## Données analysées
 
-**Dataset**: Base des séries chronologiques - disponible sur [data.gouv.fr](https://www.data.gouv.fr/datasets/service-statistique-ministeriel-de-la-securite-interieure-base-des-series-chronologiques)
+### Périmètre géographique
 
-**Période**: 2016-2024
+**Région Centre-Val de Loire** - 6 départements, 2 585 537 habitants (INSEE 2024)
 
-**Périmètre géographique**: Région Centre-Val de Loire (6 départements)
+| Département | Population |
+|-------------|-----------|
+| Loiret (45) | 684 395 |
+| Indre-et-Loire (37) | 612 061 |
+| Eure-et-Loir (28) | 439 042 |
+| Loir-et-Cher (41) | 329 470 |
+| Cher (18) | 302 306 |
+| Indre (36) | 218 263 |
 
-| Code | Département | Population (INSEE 2024) |
-|------|-------------|------------------------|
-| 18 | Cher | 302 306 |
-| 28 | Eure-et-Loir | 439 042 |
-| 36 | Indre | 218 263 |
-| 37 | Indre-et-Loire | 612 061 |
-| 41 | Loir-et-Cher | 329 470 |
-| 45 | Loiret | 684 395 |
-| **Total** | | **2 585 537** |
+### Sources
 
-### Indicateurs de criminalité
+| Donnée | Source | Accès |
+|--------|--------|-------|
+| Criminalité enregistrée | SSMSI (Ministère de l'Intérieur) | [data.gouv.fr](https://www.data.gouv.fr/datasets/service-statistique-ministeriel-de-la-securite-interieure-base-des-series-chronologiques) |
+| Sentiment d'insécurité 2007-2021 | Enquête CVS (INSEE-SSMSI) | [data.gouv.fr](https://www.data.gouv.fr/datasets/indicateurs-annuels-de-la-victimation-et-du-sentiment-dinsecurite-issus-des-enquetes-cadre-de-vie-et-securite) |
+| Sentiment d'insécurité 2022-2024 | Enquête VRS (SSMSI) | [Rapport 2024](https://www.interieur.gouv.fr/Interstats/Actualites/Vecu-et-ressenti-en-matiere-de-securite-Victimation-delinquance-et-sentiment-d-insecurite-Rapport-d-enquete-edition-2024) |
+| Population | INSEE | Recensement 2024 |
 
-| Indicateur | Catégorie | Description |
-|------------|-----------|-------------|
-| Homicides | Atteintes aux personnes | Homicides volontaires enregistrés |
-| Tentatives d'homicide | Atteintes aux personnes | Tentatives d'homicide enregistrées |
-| Violences | Atteintes aux personnes | Violences physiques (intra/extra familiales) |
-| Vols avec armes | Vols violents | Vols commis avec une arme |
-| Vols violents sans arme | Vols violents | Vols avec violence mais sans arme |
-| Cambriolages | Atteintes aux biens | Cambriolages de résidences principales et secondaires |
-| Vols de véhicules | Atteintes aux biens | Vols de véhicules motorisés |
-| Vols dans véhicules | Atteintes aux biens | Vols à l'intérieur des véhicules |
-| Vols d'accessoires | Atteintes aux biens | Vols d'accessoires sur véhicules |
-| Usage de stupéfiants | Stupéfiants | Infractions pour usage de stupéfiants |
-| Trafic de stupéfiants | Stupéfiants | Infractions pour trafic de stupéfiants |
+---
 
-### Sentiment d'insécurité
+## Résultats
 
-**Sources**:
-- Enquête CVS (Cadre de Vie et Sécurité) 2007-2021 - [data.gouv.fr](https://www.data.gouv.fr/datasets/indicateurs-annuels-de-la-victimation-et-du-sentiment-dinsecurite-issus-des-enquetes-cadre-de-vie-et-securite)
-- Enquête VRS (Vécu et Ressenti en matière de Sécurité) 2022-2024 - [Rapport SSMSI](https://www.interieur.gouv.fr/Interstats/Actualites/Vecu-et-ressenti-en-matiere-de-securite-Victimation-delinquance-et-sentiment-d-insecurite-Rapport-d-enquete-edition-2024)
+### Évolution de la criminalité enregistrée (2016 → 2024)
 
-**Indicateurs**:
-- Sentiment d'insécurité dans le quartier/village (% population 14+)
-- Sentiment d'insécurité au domicile (% population 14+)
+#### Indicateurs en baisse
 
-**Note**: Les données 2022-2024 sont des estimations basées sur les taux de croissance publiés par le SSMSI (+15%/an). L'enquête 2020 n'a pas eu lieu (COVID-19).
+| Indicateur | 2016 | 2024 | Évolution |
+|------------|------|------|-----------|
+| Vols violents sans arme | 1 559 | 930 | **-40,3%** |
+| Trafic de stupéfiants | 996 | 720 | **-27,7%** |
+| Vols d'accessoires sur véhicules | 4 106 | 3 310 | **-19,4%** |
+| Vols avec armes | 181 | 150 | **-17,1%** |
+| Vols de véhicules | 5 136 | 4 264 | **-17,0%** |
+| Homicides | 28 | 24 | **-14,3%** |
+| Usage de stupéfiants | 5 993 | 5 702 | **-4,9%** |
 
-**Périmètre**: France métropolitaine (données nationales uniquement)
+#### Indicateurs en hausse
 
-## Fonctionnalités du dashboard
+| Indicateur | 2016 | 2024 | Évolution |
+|------------|------|------|-----------|
+| Tentatives d'homicide | 55 | 131 | **+138,2%** |
+| Violences physiques | 9 137 | 15 716 | **+72,0%** |
+| Vols dans les véhicules | 6 049 | 7 787 | **+28,7%** |
+| Cambriolages | 8 327 | 9 369 | **+12,5%** |
 
-### Visualisations
+### Évolution du sentiment d'insécurité (national)
 
-- **Evolution temporelle**: Graphique interactif avec deux modes:
-  - *Valeurs*: Nombres bruts de faits enregistrés
-  - *Variation (%)*: Pourcentage d'évolution depuis 2016
+| Année | % population se sentant en insécurité |
+|-------|--------------------------------------|
+| 2016 | 10,2% |
+| 2019 | 10,9% |
+| 2021 | 10,6% |
+| 2024 | 16,1% (estimation*) |
+| **Évolution 2016-2024** | **+57,8%** |
 
-- **Cartes par indicateur**: Mini-graphiques avec moyenne annuelle et tendance
+*Les données 2022-2024 sont des estimations basées sur les taux de croissance publiés par le SSMSI (+15%/an). L'enquête 2020 n'a pas été réalisée (COVID-19).*
 
-- **Analyse statistique**: Pour chaque indicateur sélectionné:
-  - Moyenne, écart-type
-  - Coefficient de variation
-  - Skewness, Kurtosis
-  - R² de la tendance linéaire
-  - Test de significativité (p-value)
+---
 
-- **Tendances**: Graphique en barres des évolutions moyennes par an
+## Analyse
 
-- **Comparaison Perception/Réalité**:
-  - Evolution du sentiment d'insécurité national
-  - Confrontation avec les infractions enregistrées
-  - Bilan comparatif 2016-2024
+### Ce que montrent les données
 
-- **Tableau détaillé**: Données complètes avec population et taux pour 1000 habitants
+1. **La criminalité n'évolue pas de manière uniforme.** Certaines catégories d'infractions sont en nette baisse (vols violents -40%, trafic de stupéfiants -28%), d'autres en hausse significative (violences +72%, tentatives d'homicide +138%).
 
-### Interactivité
+2. **Les violences physiques augmentent fortement.** C'est la hausse la plus préoccupante en volume : +6 579 faits enregistrés entre 2016 et 2024. Cette catégorie inclut les violences intra-familiales et extra-familiales.
 
-- Sélection multiple de départements
-- Sélection multiple d'indicateurs
-- Filtrage par catégorie (Personnes, Biens, Stupéfiants)
-- Export possible des visualisations (clic droit sur les graphiques)
+3. **Les vols avec violence diminuent.** Les vols avec armes (-17%) et les vols violents sans arme (-40%) sont en baisse significative.
 
-## Limites et précautions
+4. **Les homicides restent stables à un niveau bas.** Avec 24 à 28 cas par an pour 2,6 millions d'habitants, les variations annuelles sont peu significatives statistiquement.
 
-1. **Chiffre noir**: Les statistiques ne représentent que les infractions *enregistrées* par les forces de l'ordre. De nombreux faits ne sont jamais déclarés (notamment violences intra-familiales, agressions sexuelles).
+5. **Le sentiment d'insécurité augmente plus vite que la plupart des indicateurs de criminalité.** La hausse de +58% du sentiment d'insécurité dépasse l'évolution de la majorité des indicateurs, y compris ceux en hausse.
 
-2. **Petits effectifs**: Pour certains indicateurs (homicides), les variations peuvent être dues à quelques cas seulement.
+### Limites de l'analyse
 
-3. **Données de sentiment nationales**: Les enquêtes CVS/VRS ne fournissent pas de déclinaison régionale du sentiment d'insécurité. La comparaison avec les données régionales de criminalité est donc indicative.
+- **Chiffre noir** : Les statistiques ne comptabilisent que les faits *déclarés et enregistrés*. De nombreuses infractions ne sont jamais signalées, notamment les violences intra-familiales et les agressions sexuelles.
 
-4. **Estimations VRS**: Les données de sentiment 2022-2024 sont des estimations basées sur les taux de croissance publiés, pas des chiffres officiels.
+- **Comparaison géographique** : Le sentiment d'insécurité est mesuré au niveau national, pas régional. La comparaison avec les données Centre-Val de Loire est donc indicative.
 
-5. **Analyse descriptive**: Ce dashboard présente des statistiques descriptives. Aucune relation de causalité ne peut être établie.
+- **Évolution des pratiques** : La hausse des violences peut refléter en partie une meilleure prise en compte des plaintes (notamment violences conjugales) plutôt qu'une hausse réelle des faits.
 
-## Technologies
+- **Petits effectifs** : Pour les homicides et tentatives d'homicide, les faibles volumes rendent les pourcentages d'évolution peu robustes.
 
-- HTML/CSS/JavaScript vanilla
-- [Plotly.js](https://plotly.com/javascript/) pour les visualisations
-- Données pré-calculées en JSON (généré via Python/Pandas)
+---
+
+## Conclusion
+
+Les données officielles montrent une réalité plus nuancée que le discours sur l'explosion de l'insécurité. En Centre-Val de Loire, 7 indicateurs sur 11 sont en baisse ou stables, tandis que le sentiment d'insécurité national a augmenté de 58%.
+
+Cela ne signifie pas que les préoccupations des citoyens sont infondées : les violences physiques ont réellement augmenté (+72%), et cette catégorie a un impact fort sur le ressenti. Mais le décalage entre l'évolution globale de la criminalité enregistrée et celle du sentiment d'insécurité suggère que d'autres facteurs influencent la perception : médiatisation, discours politiques, réseaux sociaux.
+
+**Ce dashboard permet à chacun d'explorer les données officielles et de se faire sa propre opinion, au-delà des discours.**
+
+---
+
+## Accès au dashboard
+
+**[Voir le dashboard interactif](https://xairon.github.io/dashboard-criminalite-cvl/)**
+
+Le dashboard permet de :
+- Sélectionner les départements et indicateurs à analyser
+- Visualiser l'évolution en valeurs absolues ou en pourcentage
+- Comparer avec le sentiment d'insécurité national
+- Consulter les statistiques détaillées par indicateur
+
+---
 
 ## Licence
 
-Les données sources sont sous [Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/) (Etalab).
+- **Données** : [Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/) (Etalab)
+- **Code et analyse** : Domaine public
 
-Le code de ce dashboard est libre de droits.
+---
 
-## Auteur
+## Méthodologie technique
 
-Dashboard créé pour l'analyse factuelle des données publiques de sécurité.
+- Extraction des données via Python (Pandas)
+- Visualisations : Plotly.js
+- Hébergement : GitHub Pages
+- Code source disponible dans ce dépôt
