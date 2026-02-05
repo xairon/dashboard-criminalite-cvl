@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Criminalite Centre-Val de Loire</title>
+    <meta name="description" content="Dashboard interactif d'analyse de la criminalite en Centre-Val de Loire. Visualisations, statistiques et comparaisons.">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg2: #111119;
+            --bg3: #1a1a2e;
+            --card: rgba(255,255,255,0.03);
+            --text: #e8e8e8;
+            --text2: #999;
+            --text3: #666;
+            --accent: #667eea;
+            --accent2: #764ba2;
+            --danger: #ef5350;
+            --warning: #ffa726;
+            --success: #66bb6a;
+            --info: #42a5f5;
+            --border: rgba(255,255,255,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+        /* Layout */
+        .app { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .sidebar-header { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h1 { font-size: 1.1rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .sidebar h3 { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 12px; }
+
+        /* Search */
+        .search { position: relative; margin-bottom: 12px; }
+        .search input { width: 100%; padding: 10px 12px 10px 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.85rem; }
+        .search input:focus { outline: none; border-color: var(--accent); }
+        .search::before { content: "🔍"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.5; }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 28px; }
+        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: var(--accent); color: #fff; border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+        .tag .x { cursor: pointer; opacity: 0.7; font-size: 0.9rem; }
+        .tag .x:hover { opacity: 1; }
+
+        /* Quick buttons */
+        .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .qbtn { padding: 5px 10px; background: transparent; border: 1px solid var(--border); color: var(--text2); border-radius: 12px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; }
+        .qbtn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Checkbox list */
+        .list { max-height: 200px; overflow-y: auto; }
+        .item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+        .item:hover { background: rgba(255,255,255,0.04); }
+        .item input { display: none; }
+        .item .chk { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.15s; }
+        .item input:checked + .chk { background: var(--accent); border-color: var(--accent); }
+        .item input:checked + .chk::after { content: "✓"; color: #fff; }
+        .item .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .item .lbl { font-size: 0.8rem; flex: 1; }
+
+        /* Main */
+        .main { flex: 1; margin-left: 300px; padding: 25px; min-height: 100vh; }
+
+        /* Header stats */
+        .header-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .hstat { background: linear-gradient(135deg, var(--bg3), var(--bg2)); border-radius: 12px; padding: 18px; border: 1px solid var(--border); text-align: center; }
+        .hstat-val { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hstat-val.danger { background: var(--danger); -webkit-background-clip: text; }
+        .hstat-val.success { background: var(--success); -webkit-background-clip: text; }
+        .hstat-lbl { font-size: 0.7rem; color: var(--text2); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .hstat-sub { font-size: 0.65rem; color: var(--text3); margin-top: 3px; }
+
+        /* Section */
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 1rem; color: #fff; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .section-title .icon { font-size: 1.2rem; }
+
+        /* Cards */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .card-title { font-size: 0.9rem; font-weight: 600; }
+        .card-actions { display: flex; gap: 8px; }
+
+        /* Grids */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+
+        /* Charts */
+        .chart { min-height: 350px; }
+        .chart-sm { min-height: 250px; }
+        .chart-mini { min-height: 180px; }
+
+        /* Year selector */
+        .year-sel { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .year-sel span { font-size: 0.8rem; color: var(--text2); margin-right: 8px; }
+        .ybtn { padding: 6px 12px; background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 15px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+        .ybtn:hover { border-color: var(--accent); }
+        .ybtn.active { background: var(--accent); border-color: var(--accent); }
+
+        /* Stat boxes */
+        .stat-box { background: rgba(66,165,245,0.08); border-left: 3px solid var(--info); padding: 15px; border-radius: 0 8px 8px 0; }
+        .stat-box h4 { color: var(--info); font-size: 0.85rem; margin-bottom: 10px; }
+        .stat-box p { font-size: 0.8rem; color: #bbb; margin-bottom: 5px; }
+        .stat-box .hl { color: #fff; font-weight: 600; }
+        .stat-box.warning { background: rgba(255,167,38,0.08); border-color: var(--warning); }
+        .stat-box.warning h4 { color: var(--warning); }
+
+        /* Mini cards */
+        .mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; cursor: pointer; transition: all 0.2s; }
+        .mini-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-color: var(--accent); }
+        .mini-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .mini-card-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .mini-card-header .name { font-size: 0.8rem; font-weight: 500; flex: 1; }
+        .mini-card-stats { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text2); margin-top: 10px; }
+        .mini-card-stats strong { color: #fff; }
+
+        /* Table */
+        .tbl-wrap { overflow-x: auto; max-height: 500px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background: var(--bg3); color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 10; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        .up { color: var(--danger); }
+        .down { color: var(--success); }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab { padding: 8px 16px; background: transparent; border: 1px solid var(--border); color: var(--text2); border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+        .tab:hover, .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+        /* Info */
+        .info-box { background: rgba(102,126,234,0.08); border-left: 3px solid var(--accent); padding: 12px 15px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.8rem; color: #bbb; }
+
+        /* Empty */
+        .empty { text-align: center; padding: 50px; color: var(--text2); }
+        .empty h3 { color: var(--text); margin-bottom: 8px; }
+
+        /* Loading */
+        .loading { display: flex; justify-content: center; padding: 40px; }
+        .spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer */
+        footer { text-align: center; padding: 25px; color: var(--text3); font-size: 0.7rem; border-top: 1px solid var(--border); margin-top: 30px; }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        /* Mobile */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .mobile-toggle { display: block !important; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        .mobile-toggle { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 200; padding: 15px 20px; background: var(--accent); border: none; color: #fff; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span style="font-size:1.5rem">📊</span>
+                <h1>Criminalite Centre-VdL</h1>
+            </div>
+
+            <h3>Departements</h3>
+            <div class="search"><input type="text" id="search-dept" placeholder="Rechercher un departement..." oninput="filterDepts()"></div>
+            <div class="tags" id="dept-tags"></div>
+            <div class="quick-btns">
+                <button class="qbtn" onclick="addRegion('centre')">Tous</button>
+                <button class="qbtn" onclick="clearDepts()">Effacer</button>
+            </div>
+            <div class="list" id="dept-list"></div>
+
+            <h3>Indicateurs</h3>
+            <div class="tags" id="ind-tags"></div>
+            <div class="quick-btns">
+                <button class="qbtn" onclick="selectAllInds()">Tous</button>
+                <button class="qbtn" onclick="selectCat('Atteintes aux personnes')">Personnes</button>
+                <button class="qbtn" onclick="selectCat('Atteintes aux biens')">Biens</button>
+                <button class="qbtn" onclick="selectCat('Stupefiants')">Stupefiants</button>
+                <button class="qbtn" onclick="clearInds()">Effacer</button>
+            </div>
+            <div class="list" id="ind-list"></div>
+
+            <div class="info-box" style="margin-top:20px">
+                <strong>Source:</strong> SSMSI<br>
+                Donnees 2016-2024<br>
+                Region Centre-Val de Loire<br>
+                <strong>Population totale:</strong> 2,59 M hab.
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <!-- Header KPIs -->
+            <div class="header-stats" id="header-stats"></div>
+
+            <!-- Vue d'ensemble -->
+            <div class="section">
+                <div class="section-title"><span class="icon">📈</span> Evolution temporelle</div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Evolution des indicateurs selectionnes</span>
+                        <div class="tabs" id="chart-mode">
+                            <button class="tab active" onclick="setChartMode('valeurs')">Valeurs</button>
+                            <button class="tab" onclick="setChartMode('variation')">Variation (%)</button>
+                        </div>
+                    </div>
+                    <div id="chart-main" class="chart"></div>
+                </div>
+            </div>
+
+            <!-- Analyse par indicateur -->
+            <div class="section">
+                <div class="section-title"><span class="icon">🔍</span> Analyse detaillee par indicateur</div>
+                <div class="grid-4" id="mini-cards"></div>
+            </div>
+
+            <!-- Analyse statistique avancée -->
+            <div class="section">
+                <div class="section-title"><span class="icon">🔬</span> Analyse statistique avancee</div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Tests statistiques par indicateur</span>
+                    </div>
+                    <div id="stats-advanced" class="grid-2"></div>
+                </div>
+            </div>
+
+            <!-- Tendances -->
+            <div class="section">
+                <div class="section-title"><span class="icon">📊</span> Tendances par indicateur</div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Evolution moyenne annuelle (/an)</span></div>
+                    <div id="chart-trends" class="chart-sm"></div>
+                </div>
+            </div>
+
+
+            <!-- Sentiment d'insécurité - Contexte national -->
+            <div class="section">
+                <div class="section-title"><span class="icon">🧠</span> Sentiment d'insecurite vs Realite (contexte national)</div>
+                <div class="info-box">
+                    <strong>Note:</strong> Donnees de sentiment d'insecurite issues des enquetes nationales CVS (2007-2021) et VRS (2022-2024).
+                    Les donnees VRS 2022-2024 sont des estimations basees sur les taux de croissance publies par le SSMSI (+15%/an).
+                    Niveau France metropolitaine uniquement - permet de contextualiser l'ecart entre perception et realite.
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Sentiment d'insecurite national (% population 14+)</span></div>
+                        <div id="chart-sentiment" class="chart-sm"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Evolution comparee: Infractions vs Sentiment</span></div>
+                        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:8px">Comparez l'evolution des indicateurs selectionnes avec celle du sentiment d'insecurite national</div>
+                        <div id="chart-compare-sentiment" class="chart-sm"></div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:15px">
+                    <div class="card-header"><span class="card-title">Bilan comparatif 2016-2024</span></div>
+                    <div id="sentiment-analysis" class="grid-2"></div>
+                </div>
+            </div>
+
+            <!-- Tableau -->
+            <div class="section">
+                <div class="section-title"><span class="icon">📋</span> Donnees detaillees</div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Tableau des donnees</span>
+                        <div class="tabs" id="table-mode">
+                            <button class="tab active" onclick="setTableMode('detail')">Toutes les donnees</button>
+                            <button class="tab" onclick="setTableMode('agrege')">Agrege (moyennes)</button>
+                        </div>
+                    </div>
+                    <div class="tbl-wrap" id="data-table"></div>
+                </div>
+            </div>
+
+            <!-- Methodologie -->
+            <div class="section">
+                <div class="section-title"><span class="icon">ℹ️</span> Methodologie</div>
+                <div class="grid-2">
+                    <div class="stat-box">
+                        <h4>Source des donnees</h4>
+                        <p>SSMSI - Service Statistique Ministeriel de la Securite Interieure</p>
+                        <p>Infractions enregistrees par la police et la gendarmerie</p>
+                        <p>Periode: 2016-2024 (9 annees) - Region Centre-Val de Loire</p>
+                    </div>
+                    <div class="stat-box warning">
+                        <h4>Limites</h4>
+                        <p>• Chiffre noir: seules les infractions declarees sont comptabilisees</p>
+                        <p>• Petits effectifs: variations dues a quelques cas</p>
+                        <p>• Analyse descriptive uniquement, pas de causalite</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+                Dashboard cree pour l'analyse des donnees publiques | <a href="https://data.gouv.fr" target="_blank">data.gouv.fr</a>
+            </footer>
+        </main>
+    </div>
+
+    <button class="mobile-toggle" onclick="toggleSidebar()">⚙️ Filtres</button>
+
+    <script>
+        let data = null;
+        let selDepts = ['41'];
+        let selInds = ['Homicides', 'Tentatives'];
+        let tableMode = 'detail'; // 'detail' ou 'agrege'
+        let chartMode = 'valeurs'; // 'valeurs' ou 'variation'
+
+        // Centre-Val de Loire uniquement
+        const CENTRE_VDL = ['18','28','36','37','41','45'];
+
+        // Population par département (INSEE 2024)
+        const POPULATION = {
+            '18': 302306,   // Cher
+            '28': 439042,   // Eure-et-Loir
+            '36': 218263,   // Indre
+            '37': 612061,   // Indre-et-Loire
+            '41': 329470,   // Loir-et-Cher
+            '45': 684395    // Loiret
+        };
+        const POP_TOTAL_CENTRE = Object.values(POPULATION).reduce((a,b) => a+b, 0); // ~2.58M
+
+        const REGIONS = {
+            centre: ['18','28','36','37','41','45']
+        };
+
+        const COLORS = ['#667eea','#ef5350','#66bb6a','#ffa726','#42a5f5','#ab47bc','#26a69a','#ff7043','#5c6bc0','#26c6da','#ec407a','#7e57c2'];
+
+        const layout = {
+            paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+            font:{color:'#e8e8e8',size:11},
+            xaxis:{gridcolor:'rgba(255,255,255,0.05)',linecolor:'rgba(255,255,255,0.1)'},
+            yaxis:{gridcolor:'rgba(255,255,255,0.05)',linecolor:'rgba(255,255,255,0.1)'},
+            margin:{t:30,r:20,b:50,l:50},
+            legend:{orientation:'h',y:-0.15,font:{size:10}},
+            hoverlabel:{bgcolor:'#1a1a2e',font:{color:'#fff'}}
+        };
+        const cfg = {responsive:true,displayModeBar:false};
+
+        async function init() {
+            try {
+                const r = await fetch('data.json');
+                data = await r.json();
+                renderDeptList();
+                renderIndList();
+                updateAll();
+            } catch(e) {
+                console.error(e);
+                document.querySelector('.main').innerHTML = '<div class="empty"><h3>Erreur de chargement</h3></div>';
+            }
+        }
+
+        function renderDeptList() {
+            let h = '';
+            // Filtrer uniquement les départements Centre-Val de Loire
+            data.departements.filter(d => CENTRE_VDL.includes(d.code)).forEach(d => {
+                const chk = selDepts.includes(d.code) ? 'checked' : '';
+                const pop = POPULATION[d.code] ? `${(POPULATION[d.code]/1000).toFixed(0)}k hab.` : '';
+                h += `<label class="item" data-c="${d.code}" data-n="${d.nom.toLowerCase()}">
+                    <input type="checkbox" ${chk} onchange="toggleDept('${d.code}')"><span class="chk"></span>
+                    <span class="lbl">${d.code} - ${d.nom}</span>
+                    <span style="font-size:0.65rem;color:var(--text3)">${pop}</span></label>`;
+            });
+            document.getElementById('dept-list').innerHTML = h;
+            updateDeptTags();
+        }
+
+        function renderIndList() {
+            let h = '';
+            Object.entries(data.indicateurs).forEach(([id,ind]) => {
+                const chk = selInds.includes(id) ? 'checked' : '';
+                h += `<label class="item"><input type="checkbox" ${chk} onchange="toggleInd('${id}')"><span class="chk"></span>
+                    <span class="dot" style="background:${ind.color}"></span><span class="lbl">${ind.nom}</span></label>`;
+            });
+            document.getElementById('ind-list').innerHTML = h;
+            updateIndTags();
+        }
+
+        function toggleDept(c) {
+            const i = selDepts.indexOf(c);
+            i >= 0 ? selDepts.splice(i,1) : selDepts.push(c);
+            renderDeptList();
+            updateAll();
+        }
+
+        function toggleInd(id) {
+            const i = selInds.indexOf(id);
+            i >= 0 ? selInds.splice(i,1) : selInds.push(id);
+            renderIndList();
+            updateAll();
+        }
+
+        function updateDeptTags() {
+            document.getElementById('dept-tags').innerHTML = selDepts.map(c => {
+                const d = data.departements.find(x=>x.code===c);
+                return `<span class="tag">${c}${d?' - '+d.nom.substring(0,8):''}<span class="x" onclick="toggleDept('${c}')">×</span></span>`;
+            }).join('');
+        }
+
+        function updateIndTags() {
+            document.getElementById('ind-tags').innerHTML = selInds.map(id => {
+                const ind = data.indicateurs[id];
+                return `<span class="tag" style="background:${ind?.color||'#667eea'}">${ind?.nom||id}<span class="x" onclick="toggleInd('${id}')">×</span></span>`;
+            }).join('');
+        }
+
+        function filterDepts() {
+            const s = document.getElementById('search-dept').value.toLowerCase();
+            document.querySelectorAll('#dept-list .item').forEach(el => {
+                el.style.display = (el.dataset.c.includes(s) || el.dataset.n.includes(s)) ? '' : 'none';
+            });
+        }
+
+        function addRegion(r) { REGIONS[r]?.forEach(c => { if(!selDepts.includes(c)) selDepts.push(c); }); renderDeptList(); updateAll(); }
+        function clearDepts() { selDepts = []; renderDeptList(); updateAll(); }
+        function selectAllInds() { selInds = Object.keys(data.indicateurs); renderIndList(); updateAll(); }
+        function selectCat(cat) { selInds = data.categories[cat] || []; renderIndList(); updateAll(); }
+        function clearInds() { selInds = []; renderIndList(); updateAll(); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+        // Fonctions statistiques
+        function pearsonCorr(x, y) {
+            const n = Math.min(x.length, y.length);
+            if (n < 3) return null;
+            const mx = x.slice(0,n).reduce((a,b)=>a+b,0)/n;
+            const my = y.slice(0,n).reduce((a,b)=>a+b,0)/n;
+            let num = 0, dx2 = 0, dy2 = 0;
+            for (let i = 0; i < n; i++) {
+                const dx = x[i] - mx, dy = y[i] - my;
+                num += dx * dy;
+                dx2 += dx * dx;
+                dy2 += dy * dy;
+            }
+            return dx2 && dy2 ? num / Math.sqrt(dx2 * dy2) : null;
+        }
+
+        function tTest(r, n) {
+            if (n < 3 || Math.abs(r) >= 1) return null;
+            const t = r * Math.sqrt((n - 2) / (1 - r * r));
+            // Approximation p-value pour t-distribution
+            const df = n - 2;
+            const x = df / (df + t * t);
+            // Beta incomplete approximation simplifiee
+            return Math.abs(t) > 2.5 ? 0.01 : Math.abs(t) > 2 ? 0.05 : Math.abs(t) > 1.5 ? 0.1 : 0.5;
+        }
+
+        function coeffVariation(values) {
+            const mean = values.reduce((a,b)=>a+b,0) / values.length;
+            const std = Math.sqrt(values.map(v=>(v-mean)**2).reduce((a,b)=>a+b,0) / values.length);
+            return mean !== 0 ? (std / mean * 100) : 0;
+        }
+
+        function skewness(values) {
+            const n = values.length;
+            const mean = values.reduce((a,b)=>a+b,0) / n;
+            const std = Math.sqrt(values.map(v=>(v-mean)**2).reduce((a,b)=>a+b,0) / n);
+            if (std === 0) return 0;
+            return values.map(v=>((v-mean)/std)**3).reduce((a,b)=>a+b,0) / n;
+        }
+
+        function kurtosis(values) {
+            const n = values.length;
+            const mean = values.reduce((a,b)=>a+b,0) / n;
+            const std = Math.sqrt(values.map(v=>(v-mean)**2).reduce((a,b)=>a+b,0) / n);
+            if (std === 0) return 0;
+            return values.map(v=>((v-mean)/std)**4).reduce((a,b)=>a+b,0) / n - 3;
+        }
+
+        function updateAll() {
+            renderHeaderStats();
+            renderMainChart();
+            renderMiniCards();
+            renderAdvancedStats();
+            renderTrends();
+            renderSentiment();
+            renderSentimentComparison();
+            renderSentimentAnalysis();
+            renderTable();
+        }
+
+        function renderHeaderStats() {
+            if (!selDepts.length || !selInds.length) {
+                document.getElementById('header-stats').innerHTML = '';
+                return;
+            }
+
+            let total = 0, maxVal = 0, maxInd = '', trends = [];
+            let popTotal = 0;
+
+            selDepts.forEach(dc => {
+                popTotal += POPULATION[dc] || 0;
+                selInds.forEach(id => {
+                    const d = data.data[id]?.[dc];
+                    if (d) {
+                        total += d.stats.total || 0;
+                        if (d.stats.total > maxVal) { maxVal = d.stats.total; maxInd = data.indicateurs[id]?.nom; }
+                        if (d.stats.tendance !== undefined) trends.push(d.stats.tendance);
+                    }
+                });
+            });
+
+            const avgTrend = trends.length ? (trends.reduce((a,b)=>a+b,0)/trends.length).toFixed(1) : 0;
+            const trendClass = avgTrend > 0 ? 'danger' : 'success';
+
+            // Calcul évolution 2016 -> 2024
+            let val2016 = 0, val2024 = 0;
+            selDepts.forEach(dc => {
+                selInds.forEach(id => {
+                    const d = data.data[id]?.[dc];
+                    if (d) {
+                        const i16 = d.annees.indexOf(2016);
+                        const i24 = d.annees.indexOf(2024);
+                        if (i16 >= 0) val2016 += d.valeurs[i16];
+                        if (i24 >= 0) val2024 += d.valeurs[i24];
+                    }
+                });
+            });
+            const evol = val2016 ? (((val2024 - val2016) / val2016) * 100).toFixed(1) : 0;
+            const evolClass = evol > 0 ? 'danger' : 'success';
+
+            document.getElementById('header-stats').innerHTML = `
+                <div class="hstat"><div class="hstat-val">${(popTotal/1000000).toFixed(2)}M</div><div class="hstat-lbl">Population</div><div class="hstat-sub">${selDepts.length} dept. selectionnes</div></div>
+                <div class="hstat"><div class="hstat-val">${val2016.toLocaleString()}</div><div class="hstat-lbl">Faits 2016</div></div>
+                <div class="hstat"><div class="hstat-val">${val2024.toLocaleString()}</div><div class="hstat-lbl">Faits 2024</div></div>
+                <div class="hstat"><div class="hstat-val ${evolClass}">${evol > 0 ? '+' : ''}${evol}%</div><div class="hstat-lbl">Evolution</div><div class="hstat-sub">2016 → 2024</div></div>
+                <div class="hstat"><div class="hstat-val ${trendClass}">${avgTrend>0?'+':''}${avgTrend}</div><div class="hstat-lbl">Tendance</div><div class="hstat-sub">faits/an en moyenne</div></div>
+            `;
+        }
+
+        function setChartMode(mode) {
+            chartMode = mode;
+            document.querySelectorAll('#chart-mode .tab').forEach((t, i) => {
+                t.classList.toggle('active', (mode === 'valeurs' && i === 0) || (mode === 'variation' && i === 1));
+            });
+            renderMainChart();
+        }
+
+        function renderMainChart() {
+            const el = document.getElementById('chart-main');
+            if (!selDepts.length || !selInds.length) {
+                el.innerHTML = '<div class="empty"><h3>Selectionnez departements et indicateurs</h3></div>';
+                return;
+            }
+
+            const traces = [];
+            const years = [2016,2017,2018,2019,2020,2021,2022,2023,2024];
+
+            if (chartMode === 'variation') {
+                // Mode variation: pourcentage de variation depuis 2016 (entre -100% et +X%)
+                selInds.forEach(id => {
+                    const ind = data.indicateurs[id];
+                    const yearTotals = {};
+                    years.forEach(y => yearTotals[y] = 0);
+
+                    selDepts.forEach(dc => {
+                        const d = data.data[id]?.[dc];
+                        if (d) {
+                            d.annees.forEach((y, i) => { yearTotals[y] = (yearTotals[y]||0) + d.valeurs[i]; });
+                        }
+                    });
+
+                    const base2016 = yearTotals[2016] || 1;
+                    const x = years.filter(y => yearTotals[y] > 0);
+                    const y = x.map(yr => ((yearTotals[yr] - base2016) / base2016) * 100);
+
+                    if (y.length) {
+                        traces.push({
+                            x, y, type: 'scatter', mode: 'lines+markers',
+                            name: ind.nom, line: {color: ind.color, width: 3}, marker: {size: 8},
+                            hovertemplate: `${ind.nom}<br>%{y:+.1f}% vs 2016<br>(%{x})<extra></extra>`
+                        });
+                    }
+                });
+
+                // Ligne de référence 0%
+                traces.push({
+                    x: [2016, 2024], y: [0, 0],
+                    type: 'scatter', mode: 'lines',
+                    name: 'Reference (2016)', line: {color: 'rgba(255,255,255,0.4)', width: 2, dash: 'dot'},
+                    hoverinfo: 'skip'
+                });
+            } else {
+                // Mode valeurs: nombres réels
+                selInds.forEach(id => {
+                    const ind = data.indicateurs[id];
+                    const yearTotals = {};
+                    years.forEach(y => yearTotals[y] = 0);
+
+                    selDepts.forEach(dc => {
+                        const d = data.data[id]?.[dc];
+                        if (d) {
+                            d.annees.forEach((y, i) => { yearTotals[y] = (yearTotals[y]||0) + d.valeurs[i]; });
+                        }
+                    });
+
+                    const x = years.filter(y => yearTotals[y] > 0);
+                    const y = x.map(yr => yearTotals[yr]);
+
+                    if (y.length) {
+                        traces.push({
+                            x, y, type: 'scatter', mode: 'lines+markers',
+                            name: ind.nom, line: {color: ind.color, width: 3}, marker: {size: 8},
+                            hovertemplate: `${ind.nom}<br>%{y:,} faits<br>(%{x})<extra></extra>`
+                        });
+                    }
+                });
+            }
+
+            if (!traces.length) { el.innerHTML = '<div class="empty">Aucune donnee</div>'; return; }
+
+            let yTitle;
+            if (chartMode === 'variation') {
+                yTitle = 'Variation depuis 2016 (%)';
+            } else {
+                yTitle = 'Nombre de faits enregistres';
+            }
+
+            Plotly.newPlot('chart-main', traces, {
+                ...layout,
+                showlegend: true,
+                yaxis:{...layout.yaxis, title: yTitle, zeroline: chartMode === 'variation', zerolinecolor: 'rgba(255,255,255,0.3)'},
+                xaxis:{...layout.xaxis, dtick:1},
+                legend:{orientation:'h', y:-0.15, font:{size:10}, itemwidth:30}
+            }, cfg);
+        }
+
+        function renderMiniCards() {
+            const el = document.getElementById('mini-cards');
+            if (!selDepts.length || !selInds.length) { el.innerHTML = ''; return; }
+
+            // Population totale sélectionnée
+            let popSel = 0;
+            selDepts.forEach(dc => popSel += POPULATION[dc] || 0);
+
+            let h = '';
+            selInds.forEach(id => {
+                const ind = data.indicateurs[id];
+                let total = 0, vals = [];
+
+                selDepts.forEach(dc => {
+                    const d = data.data[id]?.[dc];
+                    if (d) { total += d.stats.total || 0; vals.push(...d.valeurs); }
+                });
+
+                const avgAnnuel = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/9) : 0;
+                const tauxPour1000 = popSel ? ((avgAnnuel / popSel) * 1000).toFixed(2) : '-';
+                const trend = selDepts.length === 1 ? (data.data[id]?.[selDepts[0]]?.stats?.tendance || 0) : 0;
+                const trendClass = trend > 0 ? 'up' : 'down';
+
+                h += `<div class="mini-card" onclick="focusInd('${id}')">
+                    <div class="mini-card-header"><span class="dot" style="background:${ind.color}"></span><span class="name">${ind.nom}</span></div>
+                    <div id="mini-${id}" class="chart-mini"></div>
+                    <div class="mini-card-stats">
+                        <span>Moy/an: <strong>${avgAnnuel.toLocaleString()}</strong></span>
+                        <span>Taux: <strong>${tauxPour1000}</strong>/1000</span>
+                        ${trend ? `<span class="${trendClass}">${trend>0?'+':''}${trend}/an</span>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            el.innerHTML = h;
+
+            // Render mini charts
+            setTimeout(() => {
+                selInds.forEach(id => {
+                    const ind = data.indicateurs[id];
+                    let allYears = [], allVals = [];
+
+                    if (selDepts.length === 1) {
+                        const d = data.data[id]?.[selDepts[0]];
+                        if (d) { allYears = d.annees; allVals = d.valeurs; }
+                    } else {
+                        // Aggregate
+                        const yearMap = {};
+                        selDepts.forEach(dc => {
+                            const d = data.data[id]?.[dc];
+                            if (d) d.annees.forEach((y,i) => { yearMap[y] = (yearMap[y]||0) + d.valeurs[i]; });
+                        });
+                        allYears = Object.keys(yearMap).map(Number).sort();
+                        allVals = allYears.map(y => yearMap[y]);
+                    }
+
+                    if (allVals.length) {
+                        Plotly.newPlot(`mini-${id}`, [{
+                            x: allYears, y: allVals,
+                            type: 'scatter', mode: 'lines',
+                            fill: 'tozeroy', line: {color: ind.color, width: 2},
+                            fillcolor: ind.color + '20'
+                        }], {...layout, margin:{t:5,r:5,b:25,l:35}, xaxis:{...layout.xaxis,dtick:2,tickfont:{size:9}}, yaxis:{...layout.yaxis,tickfont:{size:9}}}, {...cfg, staticPlot:true});
+                    }
+                });
+            }, 50);
+        }
+
+        function focusInd(id) {
+            selInds = [id];
+            renderIndList();
+            updateAll();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function renderAdvancedStats() {
+            const el = document.getElementById('stats-advanced');
+            if (!selDepts.length || !selInds.length) { el.innerHTML = ''; return; }
+
+            let h = '';
+            selInds.forEach(id => {
+                const ind = data.indicateurs[id];
+                let allVals = [];
+
+                selDepts.forEach(dc => {
+                    const d = data.data[id]?.[dc];
+                    if (d?.valeurs) allVals.push(...d.valeurs);
+                });
+
+                if (allVals.length < 3) return;
+
+                const mean = allVals.reduce((a,b)=>a+b,0) / allVals.length;
+                const std = Math.sqrt(allVals.map(v=>(v-mean)**2).reduce((a,b)=>a+b,0) / allVals.length);
+                const cv = coeffVariation(allVals);
+                const sk = skewness(allVals);
+                const ku = kurtosis(allVals);
+
+                // Regression avec les annees (pour le premier dept selectionne avec donnees)
+                let r2 = null, slope = null, pVal = null;
+                for (const dc of selDepts) {
+                    const d = data.data[id]?.[dc];
+                    if (d?.valeurs?.length >= 3) {
+                        const r = pearsonCorr(d.annees, d.valeurs);
+                        if (r !== null) {
+                            r2 = r * r;
+                            slope = d.stats?.tendance;
+                            pVal = tTest(r, d.valeurs.length);
+                            break;
+                        }
+                    }
+                }
+
+                const skInterp = sk > 0.5 ? 'Asymetrie positive (queue droite)' : sk < -0.5 ? 'Asymetrie negative (queue gauche)' : 'Distribution symetrique';
+                const kuInterp = ku > 1 ? 'Leptokurtique (queues lourdes)' : ku < -1 ? 'Platykurtique (queues legeres)' : 'Mesokurtique (normal)';
+
+                h += `<div class="stat-box" style="border-color:${ind.color}">
+                    <h4 style="color:${ind.color}">${ind.nom}</h4>
+                    <p><span class="hl">Moyenne:</span> ${mean.toFixed(1)} | <span class="hl">Ecart-type:</span> ${std.toFixed(1)}</p>
+                    <p><span class="hl">Coef. variation:</span> ${cv.toFixed(1)}% <span style="color:var(--text3)">(dispersion relative)</span></p>
+                    <p><span class="hl">Skewness:</span> ${sk.toFixed(3)} <span style="color:var(--text3)">(${skInterp})</span></p>
+                    <p><span class="hl">Kurtosis:</span> ${ku.toFixed(3)} <span style="color:var(--text3)">(${kuInterp})</span></p>
+                    ${r2 !== null ? `<p><span class="hl">R² (tendance):</span> ${r2.toFixed(3)} | <span class="hl">Pente:</span> ${slope?.toFixed(2) || '-'}/an</p>` : ''}
+                    ${pVal !== null ? `<p><span class="hl">Significativite:</span> ${pVal < 0.05 ? '<span style="color:var(--success)">p < 0.05 (significatif)</span>' : '<span style="color:var(--text3)">p >= 0.05 (non significatif)</span>'}</p>` : ''}
+                </div>`;
+            });
+
+            el.innerHTML = h || '<div class="empty">Selectionnez des indicateurs</div>';
+        }
+
+
+
+        function renderTrends() {
+            const el = document.getElementById('chart-trends');
+            if (!selDepts.length || !selInds.length) { el.innerHTML = ''; return; }
+
+            const x = [], y = [], colors = [];
+            selInds.forEach(id => {
+                const ind = data.indicateurs[id];
+                let trends = [];
+                selDepts.forEach(dc => {
+                    const t = data.data[id]?.[dc]?.stats?.tendance;
+                    if (t !== undefined) trends.push(t);
+                });
+                const avg = trends.length ? trends.reduce((a,b)=>a+b,0)/trends.length : 0;
+                x.push(ind.nom);
+                y.push(avg);
+                colors.push(avg > 0 ? '#ef5350' : '#66bb6a');
+            });
+
+            Plotly.newPlot('chart-trends', [{
+                x, y, type: 'bar',
+                marker: {color: colors},
+                hovertemplate: '%{x}<br>%{y:.1f}/an<extra></extra>'
+            }], {...layout, yaxis:{...layout.yaxis,title:'Tendance (/an)',zeroline:true,zerolinecolor:'rgba(255,255,255,0.2)'}, xaxis:{...layout.xaxis,tickangle:-30}}, cfg);
+        }
+
+        function renderSentiment() {
+            const el = document.getElementById('chart-sentiment');
+            if (!data.sentiment_national) { el.innerHTML = '<div class="empty">Donnees non disponibles</div>'; return; }
+
+            const sent = data.sentiment_national;
+            const traces = [
+                {
+                    x: sent.quartier.annees, y: sent.quartier.taux,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: 'Insecurite quartier/village',
+                    line: {color: '#ffa726', width: 2}, marker: {size: 6},
+                    hovertemplate: '%{y:.1f}% en %{x}<extra></extra>'
+                },
+                {
+                    x: sent.domicile.annees, y: sent.domicile.taux,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: 'Insecurite au domicile',
+                    line: {color: '#ef5350', width: 2}, marker: {size: 6},
+                    hovertemplate: '%{y:.1f}% en %{x}<extra></extra>'
+                }
+            ];
+
+            Plotly.newPlot('chart-sentiment', traces, {
+                ...layout,
+                showlegend: true,
+                yaxis:{...layout.yaxis, title:'% population', range:[0,15]},
+                xaxis:{...layout.xaxis, dtick:2},
+                legend:{orientation:'h', y:-0.2, font:{size:9}}
+            }, cfg);
+        }
+
+        function renderSentimentComparison() {
+            const el = document.getElementById('chart-compare-sentiment');
+            if (!data.sentiment_national || !selDepts.length || !selInds.length) {
+                el.innerHTML = '<div class="empty">Selectionnez des indicateurs</div>';
+                return;
+            }
+
+            // Calculer l'evolution de la criminalite selectionnee (normalisee base 100 en 2016)
+            const years = [2016,2017,2018,2019,2020,2021,2022,2023,2024];
+            const crimeByYear = {};
+            years.forEach(y => crimeByYear[y] = 0);
+
+            selDepts.forEach(dc => {
+                selInds.forEach(id => {
+                    const d = data.data[id]?.[dc];
+                    if (d) {
+                        years.forEach(y => {
+                            const idx = d.annees.indexOf(y);
+                            if (idx >= 0) crimeByYear[y] += d.valeurs[idx];
+                        });
+                    }
+                });
+            });
+
+            const base2016 = crimeByYear[2016] || 1;
+            const crimeNorm = years.map(y => crimeByYear[y] ? (crimeByYear[y] / base2016) * 100 : null);
+
+            // Sentiment normalise base 100
+            const sent = data.sentiment_national.quartier;
+            const sentBase = sent.taux[sent.annees.indexOf(2016)] || 10;
+            const sentNorm = years.map(y => {
+                const idx = sent.annees.indexOf(y);
+                return idx >= 0 && sent.taux[idx] ? (sent.taux[idx] / sentBase) * 100 : null;
+            });
+
+            // Nom des indicateurs selectionnes pour la legende
+            const indNames = selInds.map(id => data.indicateurs[id]?.nom).join(', ');
+            const chartLabel = selInds.length === 1 ? indNames : `${selInds.length} indicateurs selectionnes`;
+
+            Plotly.newPlot('chart-compare-sentiment', [
+                {
+                    x: years, y: crimeNorm,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: chartLabel,
+                    line: {color: '#667eea', width: 3}, marker: {size: 8},
+                    connectgaps: false,
+                    hovertemplate: `${chartLabel}: %{y:.0f}<extra></extra>`
+                },
+                {
+                    x: years, y: sentNorm,
+                    type: 'scatter', mode: 'lines+markers',
+                    name: 'Sentiment insecurite (national)',
+                    line: {color: '#ffa726', width: 3, dash: 'dash'}, marker: {size: 8},
+                    connectgaps: false,
+                    hovertemplate: 'Sentiment: %{y:.0f}<extra></extra>'
+                },
+                {
+                    x: [2016, 2024], y: [100, 100],
+                    type: 'scatter', mode: 'lines',
+                    name: 'Base 100 (2016)',
+                    line: {color: 'rgba(255,255,255,0.3)', width: 1, dash: 'dot'},
+                    hoverinfo: 'skip'
+                }
+            ], {
+                ...layout,
+                showlegend: true,
+                yaxis:{...layout.yaxis, title:'Indice base 100 (2016)'},
+                xaxis:{...layout.xaxis, dtick:1},
+                legend:{orientation:'h', y:-0.25, font:{size:9}},
+                annotations: [{
+                    x: 2022, y: 120, xref: 'x', yref: 'y',
+                    text: 'VRS (estimations)', showarrow: false,
+                    font: {size: 9, color: '#999'}
+                }]
+            }, cfg);
+        }
+
+        function renderSentimentAnalysis() {
+            const el = document.getElementById('sentiment-analysis');
+            if (!data.sentiment_national || !selDepts.length || !selInds.length) {
+                el.innerHTML = '';
+                return;
+            }
+
+            // Calcul des evolutions
+            const sent = data.sentiment_national.quartier;
+            const sent2016 = sent.taux[sent.annees.indexOf(2016)];
+            const sent2024 = sent.taux[sent.annees.indexOf(2024)];
+            const sentEvol = ((sent2024 - sent2016) / sent2016 * 100).toFixed(1);
+
+            // Evolution criminalite Centre-VdL 2016-2024
+            let crime2016 = 0, crime2024 = 0;
+            selDepts.forEach(dc => {
+                selInds.forEach(id => {
+                    const d = data.data[id]?.[dc];
+                    if (d) {
+                        const i16 = d.annees.indexOf(2016);
+                        const i24 = d.annees.indexOf(2024);
+                        if (i16 >= 0) crime2016 += d.valeurs[i16];
+                        if (i24 >= 0) crime2024 += d.valeurs[i24];
+                    }
+                });
+            });
+            const crimeEvol = crime2016 ? ((crime2024 - crime2016) / crime2016 * 100).toFixed(1) : 0;
+
+            const crimeClass = crimeEvol > 0 ? 'danger' : 'success';
+            const sentClass = sentEvol > 0 ? 'danger' : 'success';
+
+            const indNoms = selInds.map(id => data.indicateurs[id]?.nom).join(', ');
+            const deptNoms = selDepts.map(dc => data.departements.find(d=>d.code===dc)?.nom || dc).join(', ');
+
+            el.innerHTML = `
+                <div class="stat-box" style="border-color:var(--accent)">
+                    <h4 style="color:var(--accent)">Infractions enregistrees (selection)</h4>
+                    <p>Evolution 2016-2024: <span class="hl ${crimeClass}">${crimeEvol > 0 ? '+' : ''}${crimeEvol}%</span></p>
+                    <p>2016: ${crime2016.toLocaleString()} faits</p>
+                    <p>2024: ${crime2024.toLocaleString()} faits</p>
+                    <p style="margin-top:10px;color:var(--text3);font-size:0.7rem">
+                        <strong>Indicateurs:</strong> ${indNoms}<br>
+                        <strong>Departements:</strong> ${deptNoms}
+                    </p>
+                </div>
+                <div class="stat-box warning">
+                    <h4>Sentiment d'insecurite (national)</h4>
+                    <p>Evolution 2016-2024: <span class="hl ${sentClass}">${sentEvol > 0 ? '+' : ''}${sentEvol}%</span></p>
+                    <p>2016: ${sent2016}% de la population</p>
+                    <p>2024: ${sent2024}% de la population (estimation VRS)</p>
+                    <p style="margin-top:10px;color:var(--text3);font-size:0.7rem">
+                        Sources: CVS 2007-2021 + VRS 2022-2024 (SSMSI)
+                    </p>
+                </div>
+                <div class="stat-box" style="border-color:var(--info);grid-column:span 2">
+                    <h4 style="color:var(--info)">Interpretation</h4>
+                    <p>Entre 2016 et 2024, le <strong>sentiment d'insecurite a augmente de ${sentEvol}%</strong> au niveau national,
+                    alors que les indicateurs selectionnes (${indNoms}) en ${deptNoms} ont evolue de <strong>${crimeEvol}%</strong>.</p>
+                    <p style="margin-top:8px">Cette comparaison illustre l'ecart possible entre la perception (influencee par les medias, discours politiques,
+                    environnement social) et les statistiques enregistrees par les forces de l'ordre.</p>
+                    <p style="margin-top:8px;color:var(--warning)"><strong>Limites:</strong> Sentiment = niveau national (pas regional).
+                    Donnees 2022-2024 = estimations (+15%/an selon SSMSI).
+                    Les infractions enregistrees ne representent pas la totalite des faits (chiffre noir).</p>
+                </div>
+            `;
+        }
+
+        function setTableMode(mode) {
+            tableMode = mode;
+            document.querySelectorAll('#table-mode .tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`#table-mode .tab:${mode === 'detail' ? 'first' : 'last'}-child`).classList.add('active');
+            renderTable();
+        }
+
+        function renderTable() {
+            const el = document.getElementById('data-table');
+            if (!selDepts.length || !selInds.length) { el.innerHTML = '<div class="empty">Selectionnez des donnees</div>'; return; }
+
+            const years = [2016,2017,2018,2019,2020,2021,2022,2023,2024];
+
+            // Population totale sélectionnée
+            let popSel = 0;
+            selDepts.forEach(dc => popSel += POPULATION[dc] || 0);
+
+            if (tableMode === 'agrege') {
+                // Mode agrégé: une ligne par indicateur avec moyennes
+                let h = `<div style="margin-bottom:10px;font-size:0.75rem;color:var(--text2)">Population selection: <strong>${popSel.toLocaleString()} habitants</strong></div>`;
+                h += '<table><thead><tr><th>Indicateur</th>';
+                years.forEach(y => h += `<th>${y}</th>`);
+                h += '<th>Total</th><th>Moy/an</th><th>Taux/1000</th><th>Tend.</th></tr></thead><tbody>';
+
+                selInds.forEach(id => {
+                    const ind = data.indicateurs[id];
+                    const yearTotals = {};
+                    years.forEach(y => yearTotals[y] = 0);
+                    let grandTotal = 0, allVals = [], trends = [];
+
+                    selDepts.forEach(dc => {
+                        const d = data.data[id]?.[dc];
+                        if (d) {
+                            years.forEach(y => {
+                                const idx = d.annees.indexOf(y);
+                                if (idx >= 0) yearTotals[y] += d.valeurs[idx];
+                            });
+                            grandTotal += d.stats?.total || 0;
+                            allVals.push(...d.valeurs);
+                            if (d.stats?.tendance !== undefined) trends.push(d.stats.tendance);
+                        }
+                    });
+
+                    const avgTrend = trends.length ? (trends.reduce((a,b)=>a+b,0)/trends.length).toFixed(1) : 0;
+                    const tc = avgTrend > 0 ? 'up' : 'down';
+                    const avgYear = allVals.length ? Math.round(allVals.reduce((a,b)=>a+b,0)/years.length) : 0;
+                    const tauxPour1000 = popSel ? ((avgYear / popSel) * 1000).toFixed(2) : '-';
+
+                    h += `<tr><td style="border-left:3px solid ${ind.color};padding-left:8px"><strong>${ind.nom}</strong></td>`;
+                    years.forEach(y => h += `<td>${yearTotals[y].toLocaleString()}</td>`);
+                    h += `<td><strong>${grandTotal.toLocaleString()}</strong></td>`;
+                    h += `<td>${avgYear.toLocaleString()}</td>`;
+                    h += `<td><strong>${tauxPour1000}</strong></td>`;
+                    h += `<td class="${tc}">${avgTrend>0?'+':''}${avgTrend}/an</td></tr>`;
+                });
+
+                h += '</tbody></table>';
+                el.innerHTML = h;
+            } else {
+                // Mode détail: une ligne par dept x indicateur
+                let h = '<table><thead><tr><th>Departement</th><th>Population</th><th>Indicateur</th>';
+                years.forEach(y => h += `<th>${y}</th>`);
+                h += '<th>Total</th><th>Moy/an</th><th>Taux/1000</th><th>Tend.</th></tr></thead><tbody>';
+
+                selDepts.forEach(dc => {
+                    const dept = data.departements.find(d=>d.code===dc);
+                    const pop = POPULATION[dc] || 0;
+                    const popStr = pop ? `${(pop/1000).toFixed(0)}k` : '-';
+                    let firstRow = true;
+
+                    selInds.forEach(id => {
+                        const ind = data.indicateurs[id];
+                        const d = data.data[id]?.[dc];
+                        if (d) {
+                            const s = d.stats;
+                            const tc = (s.tendance||0) > 0 ? 'up' : 'down';
+                            const tauxPour1000 = pop ? ((s.moyenne / pop) * 1000).toFixed(2) : '-';
+
+                            h += `<tr>`;
+                            if (firstRow) {
+                                h += `<td rowspan="${selInds.length}"><strong>${dc}</strong><br>${dept?.nom||''}</td>`;
+                                h += `<td rowspan="${selInds.length}">${popStr}</td>`;
+                                firstRow = false;
+                            }
+                            h += `<td style="border-left:3px solid ${ind.color};padding-left:8px">${ind.nom}</td>`;
+                            years.forEach(y => {
+                                const idx = d.annees.indexOf(y);
+                                const val = idx >= 0 ? d.valeurs[idx] : '-';
+                                h += `<td>${typeof val==='number'?val.toLocaleString():val}</td>`;
+                            });
+                            h += `<td><strong>${s.total?.toLocaleString()||'-'}</strong></td>`;
+                            h += `<td>${s.moyenne||'-'}</td>`;
+                            h += `<td><strong>${tauxPour1000}</strong></td>`;
+                            h += `<td class="${tc}">${s.tendance>0?'+':''}${s.tendance||0}/an</td></tr>`;
+                        }
+                    });
+                });
+
+                h += '</tbody></table>';
+                el.innerHTML = h;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
